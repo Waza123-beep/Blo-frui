@@ -1,4 +1,4 @@
-local RAW_URL = "https://raw.githubusercontent.com/Waza123-beep/Blo-frui/refs/heads/main/MainLoader.lua"
+local RAW_URL = "https://raw.githubusercontent.com/Waza123-beep/Blo-frui/refs/heads/main/"
 
 local PlaceIds = {
     Sea1 = {2753915549},
