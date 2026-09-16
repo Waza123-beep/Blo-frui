@@ -1,149 +1,116 @@
 --╔══════════════════════════════════════════════════════════════════════════════╗
---║                    BLOX FRUITS ULTIMATE HUB - MAIN LOADER                    ║
---║                    Auto-Detect Sea | Fluent UI | Synapse X                    ║
+--║                    BLOX FRUITS ULTIMATE HUB - MAIN LOADER                      ║
+--║                   Auto-Detect Sea & Load Corresponding Functions               ║
+--║                         Compatible: Synapse X | Fluent UI                    ║
 --╚══════════════════════════════════════════════════════════════════════════════╝
 
 -- Services
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
 
 -- Local Player
 local LocalPlayer = Players.LocalPlayer
 
---═══════════════════════════════════════════════════════════════════════════════
--- SEA DETECTION SYSTEM
---═══════════════════════════════════════════════════════════════════════════════
-
-local PlaceId = game.PlaceId
-
 -- Sea Detection
-local SeaDetection = {
-    FirstSea = PlaceId == 2753915549 or PlaceId == 85211729168715,
-    SecondSea = PlaceId == 4442272183 or PlaceId == 79091703265657,
-    ThirdSea = PlaceId == 7449423635 or PlaceId == 100117331123089
-}
+local PlaceId = game.PlaceId
+local World1 = PlaceId == 2753915549 or PlaceId == 85211729168715
+local World2 = PlaceId == 4442272183 or PlaceId == 79091703265657
+local World3 = PlaceId == 7449423635 or PlaceId == 100117331123089
 
---═══════════════════════════════════════════════════════════════════════════════
--- NOTIFICATION SYSTEM
---═══════════════════════════════════════════════════════════════════════════════
+-- GitHub Repository Configuration
+local GitHubRepo = "https://raw.githubusercontent.com/Waza123-beep/Blo-frui/main/"
 
-function SendNotification(Title, Text, Duration)
-    local CoreGui = game:GetService("CoreGui")
-    local Notification = Instance.new("ScreenGui")
-    Notification.Name = "BFNotification"
-    Notification.Parent = CoreGui
-    
-    local Frame = Instance.new("Frame")
-    Frame.Size = UDim2.new(0, 300, 0, 80)
-    Frame.Position = UDim2.new(0.5, -150, 0, -100)
-    Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    Frame.BorderSizePixel = 0
-    Frame.Parent = Notification
-    
-    local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0, 8)
-    Corner.Parent = Frame
-    
-    local TitleLabel = Instance.new("TextLabel")
-    TitleLabel.Size = UDim2.new(1, -20, 0, 25)
-    TitleLabel.Position = UDim2.new(0, 10, 0, 5)
-    TitleLabel.BackgroundTransparency = 1
-    TitleLabel.Text = Title
-    TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TitleLabel.TextSize = 16
-    TitleLabel.Font = Enum.Font.GothamBold
-    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    TitleLabel.Parent = Frame
-    
-    local TextLabel = Instance.new("TextLabel")
-    TextLabel.Size = UDim2.new(1, -20, 0, 45)
-    TextLabel.Position = UDim2.new(0, 10, 0, 30)
-    TextLabel.BackgroundTransparency = 1
-    TextLabel.Text = Text
-    TextLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-    TextLabel.TextSize = 14
-    TextLabel.Font = Enum.Font.Gotham
-    TextLabel.TextXAlignment = Enum.TextXAlignment.Left
-    TextLabel.TextWrapped = true
-    TextLabel.Parent = Frame
-    
-    -- Animation
-    Frame:TweenPosition(UDim2.new(0.5, -150, 0, 20), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.5, true)
-    
-    task.wait(Duration or 5)
-    
-    Frame:TweenPosition(UDim2.new(0.5, -150, 0, -100), Enum.EasingDirection.In, Enum.EasingStyle.Quad, 0.5, true)
-    task.wait(0.5)
-    Notification:Destroy()
+-- Sea Information
+local CurrentSea = "Unknown"
+local SeaLevelRange = ""
+
+if World1 then
+    CurrentSea = "First Sea"
+    SeaLevelRange = "Levels 1 - 700"
+elseif World2 then
+    CurrentSea = "Second Sea"
+    SeaLevelRange = "Levels 700 - 1500"
+elseif World3 then
+    CurrentSea = "Third Sea"
+    SeaLevelRange = "Levels 1500 - 2600+"
 end
 
---═══════════════════════════════════════════════════════════════════════════════
--- SCRIPT LOADER
---═══════════════════════════════════════════════════════════════════════════════
+-- Load Fluent UI Library
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
-function LoadSeaScript(SeaName, ScriptUrl)
-    SendNotification("Loading...", "Loading " .. SeaName .. " Functions...", 3)
-    
-    local success, result = pcall(function()
-        return loadstring(game:HttpGet(ScriptUrl))()
-    end)
-    
-    if success then
-        SendNotification("Success!", SeaName .. " Functions Loaded Successfully!", 5)
-        print("✅ [" .. SeaName .. "] Functions loaded successfully")
+-- Create Main Window
+local Window = Fluent:CreateWindow({
+    Title = "Blox Fruits Ultimate Hub",
+    SubTitle = CurrentSea .. " | " .. SeaLevelRange,
+    TabWidth = 160,
+    Size = UDim2.fromOffset(600, 500),
+    Acrylic = true,
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.LeftControl
+})
+
+-- Notification on Load
+Fluent:Notify({
+    Title = "Blox Fruits Hub Loaded",
+    Content = "Detected: " .. CurrentSea .. "\nLoading specific functions...",
+    Duration = 5
+})
+
+-- Load Sea-Specific Functions
+local function LoadSeaFunctions()
+    if World1 then
+        -- Load First Sea Functions
+        Fluent:Notify({
+            Title = "Loading...",
+            Content = "Loading First Sea Functions...",
+            Duration = 3
+        })
+        
+        local Sea1Functions = loadstring(game:HttpGet(GitHubRepo .. "Sea1Functions.lua"))()
+        Sea1Functions.Initialize(Window, Fluent)
+        
+    elseif World2 then
+        -- Load Second Sea Functions
+        Fluent:Notify({
+            Title = "Loading...",
+            Content = "Loading Second Sea Functions...",
+            Duration = 3
+        })
+        
+        local Sea2Functions = loadstring(game:HttpGet(GitHubRepo .. "Sea2Functions.lua"))()
+        Sea2Functions.Initialize(Window, Fluent)
+        
+    elseif World3 then
+        -- Load Third Sea Functions
+        Fluent:Notify({
+            Title = "Loading...",
+            Content = "Loading Third Sea Functions...",
+            Duration = 3
+        })
+        
+        local Sea3Functions = loadstring(game:HttpGet(GitHubRepo .. "Sea3Functions.lua"))()
+        Sea3Functions.Initialize(Window, Fluent)
     else
-        SendNotification("Error!", "Failed to load " .. SeaName .. " Functions", 5)
-        warn("❌ [" .. SeaName .. "] Failed to load: " .. tostring(result))
+        Fluent:Notify({
+            Title = "Error",
+            Content = "Could not detect current sea!",
+            Duration = 5
+        })
     end
 end
 
---═══════════════════════════════════════════════════════════════════════════════
--- MAIN EXECUTION
---═══════════════════════════════════════════════════════════════════════════════
+-- Initialize
+spawn(function()
+    wait(2)
+    LoadSeaFunctions()
+end)
 
 print("╔══════════════════════════════════════════════════════════════════════════════╗")
-print("║                    BLOX FRUITS ULTIMATE HUB - MAIN LOADER                    ║")
+print("║                    BLOX FRUITS ULTIMATE HUB                                  ║")
+print("║                         Main Loader Initialized                              ║")
 print("║                                                                              ║")
-print("║   Detecting Current Sea...                                                   ║")
-print("╚══════════════════════════════════════════════════════════════════════════════╝")
-
--- GitHub Raw URLs (Replace with your actual repository URLs)
-local GitHubBase = "https://raw.githubusercontent.com/Waza123-beep/Blo-frui/main/"
-
-if SeaDetection.FirstSea then
-    print("🌊 First Sea Detected!")
-    SendNotification("First Sea Detected!", "Loading First Sea Functions...", 3)
-    LoadSeaScript("First Sea", GitHubBase .. "Sea1Functions.lua")
-    
-elseif SeaDetection.SecondSea then
-    print("🌊 Second Sea Detected!")
-    SendNotification("Second Sea Detected!", "Loading Second Sea Functions...", 3)
-    LoadSeaScript("Second Sea", GitHubBase .. "Sea2Functions.lua")
-    
-elseif SeaDetection.ThirdSea then
-    print("🌊 Third Sea Detected!")
-    SendNotification("Third Sea Detected!", "Loading Third Sea Functions...", 3)
-    LoadSeaScript("Third Sea", GitHubBase .. "Sea3Functions.lua")
-    
-else
-    print("❌ Unknown Sea!")
-    SendNotification("Error!", "Could not detect current sea!", 5)
-    
-    -- Try to determine from level
-    local Level = LocalPlayer.Data.Level.Value
-    if Level <= 700 then
-        print("📊 Based on level, assuming First Sea")
-        LoadSeaScript("First Sea", GitHubBase .. "Sea1Functions.lua")
-    elseif Level <= 1500 then
-        print("📊 Based on level, assuming Second Sea")
-        LoadSeaScript("Second Sea", GitHubBase .. "Sea2Functions.lua")
-    else
-        print("📊 Based on level, assuming Third Sea")
-        LoadSeaScript("Third Sea", GitHubBase .. "Sea3Functions.lua")
-    end
-end
-
-print("╔══════════════════════════════════════════════════════════════════════════════╗")
-print("║                    MAIN LOADER COMPLETED                                     ║")
+print("║   Current Sea: " .. string.format("%-20s", CurrentSea) .. "                    ║")
+print("║   Level Range: " .. string.format("%-20s", SeaLevelRange) .. "                    ║")
 print("╚══════════════════════════════════════════════════════════════════════════════╝")
