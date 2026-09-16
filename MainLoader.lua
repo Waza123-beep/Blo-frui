@@ -1,116 +1,97 @@
---╔══════════════════════════════════════════════════════════════════════════════╗
---║                    BLOX FRUITS ULTIMATE HUB - MAIN LOADER                      ║
---║                   Auto-Detect Sea & Load Corresponding Functions               ║
---║                         Compatible: Synapse X | Fluent UI                    ║
---╚══════════════════════════════════════════════════════════════════════════════╝
+-- ============================================
+-- MainLoader.lua
+-- Detecta el mar actual y carga el módulo correspondiente
+-- ============================================
 
--- Services
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local HttpService = game:GetService("HttpService")
-local TeleportService = game:GetService("TeleportService")
-
--- Local Player
 local LocalPlayer = Players.LocalPlayer
 
--- Sea Detection
-local PlaceId = game.PlaceId
-local World1 = PlaceId == 2753915549 or PlaceId == 85211729168715
-local World2 = PlaceId == 4442272183 or PlaceId == 79091703265657
-local World3 = PlaceId == 7449423635 or PlaceId == 100117331123089
+-- Detección de Seas por PlaceId
+local SEA_DATA = {
+    [2753915549] = {Name = "First Sea", Module = "Sea1Functions", MaxLevel = 700},
+    [85211729168715] = {Name = "First Sea", Module = "Sea1Functions", MaxLevel = 700}, -- Private/Alternative ID
+    [4442272183] = {Name = "Second Sea", Module = "Sea2Functions", MaxLevel = 1500},
+    [79091703265657] = {Name = "Second Sea", Module = "Sea2Functions", MaxLevel = 1500},
+    [7449423635] = {Name = "Third Sea", Module = "Sea3Functions", MaxLevel = 3000},
+    [100117331123089] = {Name = "Third Sea", Module = "Sea3Functions", MaxLevel = 3000}
+}
 
--- GitHub Repository Configuration
-local GitHubRepo = "https://raw.githubusercontent.com/Waza123-beep/Blo-frui/main/"
+local CurrentSea = SEA_DATA[game.PlaceId] or {Name = "Unknown", Module = "Sea1Functions", MaxLevel = 700}
 
--- Sea Information
-local CurrentSea = "Unknown"
-local SeaLevelRange = ""
+-- Variables globales compartidas
+getgenv().BloxFruitsHub = {
+    CurrentSea = CurrentSea.Name,
+    ModuleName = CurrentSea.Module,
+    MaxLevel = CurrentSea.MaxLevel,
+    FluentLoaded = false,
+    Settings = {
+        FastAttack = true,
+        BringMobs = true,
+        SafeMode = false,
+        AutoHaki = true
+    }
+}
 
-if World1 then
-    CurrentSea = "First Sea"
-    SeaLevelRange = "Levels 1 - 700"
-elseif World2 then
-    CurrentSea = "Second Sea"
-    SeaLevelRange = "Levels 700 - 1500"
-elseif World3 then
-    CurrentSea = "Third Sea"
-    SeaLevelRange = "Levels 1500 - 2600+"
-end
-
--- Load Fluent UI Library
+-- Cargar Fluent UI
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+getgenv().BloxFruitsHub.FluentLoaded = true
 
--- Create Main Window
+-- Crear ventana principal
 local Window = Fluent:CreateWindow({
-    Title = "Blox Fruits Ultimate Hub",
-    SubTitle = CurrentSea .. " | " .. SeaLevelRange,
+    Title = "Blox Fruits Hub | " .. CurrentSea.Name,
+    SubTitle = "Update 30 Compatible",
     TabWidth = 160,
-    Size = UDim2.fromOffset(600, 500),
+    Size = UDim2.fromOffset(580, 460),
     Acrylic = true,
     Theme = "Dark",
     MinimizeKey = Enum.KeyCode.LeftControl
 })
 
--- Notification on Load
+-- Tabs globales (disponibles en todos los mares)
+local Tabs = {
+    Main = Window:AddTab({ Title = "Main", Icon = "home" }),
+    Farm = Window:AddTab({ Title = "Farm", Icon = "sword" }),
+    Quests = Window:AddTab({ Title = "Quests", Icon = "scroll" }),
+    Bosses = Window:AddTab({ Title = "Bosses", Icon = "skull" }),
+    Teleport = Window:AddTab({ Title = "Teleport", Icon = "map" }),
+    Fruits = Window:AddTab({ Title = "Fruits", Icon = "apple" }),
+    Codes = Window:AddTab({ Title = "Codes", Icon = "ticket" }),
+    Combat = Window:AddTab({ Title = "Combat V2", Icon = "zap" }), -- Solo funcional en Sea 1 tras Update 30
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+}
+
+-- Notificación inicial
 Fluent:Notify({
-    Title = "Blox Fruits Hub Loaded",
-    Content = "Detected: " .. CurrentSea .. "\nLoading specific functions...",
+    Title = "Hub Loaded",
+    Content = "Detected: " .. CurrentSea.Name,
     Duration = 5
 })
 
--- Load Sea-Specific Functions
-local function LoadSeaFunctions()
-    if World1 then
-        -- Load First Sea Functions
+-- Cargar módulo específico del mar
+task.spawn(function()
+    local success, module = pcall(function()
+        return loadstring(game:HttpGet("https://raw.githubusercontent.com/Waza123-beep/Blo-frui/main/" .. CurrentSea.Module .. ".lua"))()
+    end)
+    
+    if success and module then
+        module.Initialize(Window, Tabs, Fluent)
         Fluent:Notify({
-            Title = "Loading...",
-            Content = "Loading First Sea Functions...",
+            Title = "Module Loaded",
+            Content = CurrentSea.Module .. " initialized successfully",
             Duration = 3
         })
-        
-        local Sea1Functions = loadstring(game:HttpGet(GitHubRepo .. "Sea1Functions.lua"))()
-        Sea1Functions.Initialize(Window, Fluent)
-        
-    elseif World2 then
-        -- Load Second Sea Functions
-        Fluent:Notify({
-            Title = "Loading...",
-            Content = "Loading Second Sea Functions...",
-            Duration = 3
-        })
-        
-        local Sea2Functions = loadstring(game:HttpGet(GitHubRepo .. "Sea2Functions.lua"))()
-        Sea2Functions.Initialize(Window, Fluent)
-        
-    elseif World3 then
-        -- Load Third Sea Functions
-        Fluent:Notify({
-            Title = "Loading...",
-            Content = "Loading Third Sea Functions...",
-            Duration = 3
-        })
-        
-        local Sea3Functions = loadstring(game:HttpGet(GitHubRepo .. "Sea3Functions.lua"))()
-        Sea3Functions.Initialize(Window, Fluent)
     else
         Fluent:Notify({
             Title = "Error",
-            Content = "Could not detect current sea!",
+            Content = "Failed to load " .. CurrentSea.Module,
             Duration = 5
         })
+        warn("Module load error:", module)
     end
-end
-
--- Initialize
-spawn(function()
-    wait(2)
-    LoadSeaFunctions()
 end)
 
-print("╔══════════════════════════════════════════════════════════════════════════════╗")
-print("║                    BLOX FRUITS ULTIMATE HUB                                  ║")
-print("║                         Main Loader Initialized                              ║")
-print("║                                                                              ║")
-print("║   Current Sea: " .. string.format("%-20s", CurrentSea) .. "                    ║")
-print("║   Level Range: " .. string.format("%-20s", SeaLevelRange) .. "                    ║")
-print("╚══════════════════════════════════════════════════════════════════════════════╝")
+-- Sistema de cambio de detección (si el jugador viaja entre seas)
+LocalPlayer.OnTeleport:Connect(function()
+    -- El script se reiniciará automáticamente al teleportar
+end)
